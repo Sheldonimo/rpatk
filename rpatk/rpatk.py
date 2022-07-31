@@ -8,89 +8,98 @@ import pyodbc,mysql.connector#DB
 ##Threading##
 import sys, trace, threading
 import decimal
+from typing import Tuple, Dict, List, Union, Any
+
+
 
 class press(object):
-    def __init__(self,*args,mode='and'):
-        completa=lambda x:x if '.png' in x.lower() else x+'.png'
-        self.__root="\\".join(os.getcwd().split('\\')+['Imagenes'])
-        self.image=[completa(x) for x in args]
-        self.acciones={'L':'left','R':'right','M':'middle'}
-        self.mode=mode.lower()
+    def __init__(self, *args, mode: str = 'and') -> None:
+        completa = lambda x:x if '.png' in x.lower() else x+'.png'
+        self.__root = "\\".join(os.getcwd().split('\\')+['Imagenes'])
+        self.image = [completa(x) for x in args]
+        self.acciones = {'L':'left','R':'right','M':'middle'}
+        self.mode = mode.lower()
 
-    def clickh(self,x0=0,y0=0,x1=0,y1=0,mensaje=True,threshold=0.9,grayscale=False,duration=0,**kwargs):
-        completa=lambda x:x if '.png' in x.lower() else x+'.png'
-        if kwargs!={}:self.image=[completa(img)]
+
+    def clickh(self, x0: int = 0, y0: int = 0, x1: int = 0, y1: int = 0, mensaje: bool = True,
+        threshold: float = 0.9, grayscale: bool = False, duration: float = 0, **kwargs) -> None:
+        completa = lambda x:x if '.png' in x.lower() else x+'.png'
+        if kwargs != {}:self.image = [completa(img)]
         pya.FAILSAFE = False #bloquea el error que se muestra cuando se mueve el mouse en plena acción de la función click
         for img in self.image:
-            image_pos = pya.locateOnScreen(os.path.join(self.__root,img), confidence=threshold, grayscale=grayscale)
-            if isinstance(image_pos,pya.pyscreeze.Box):
+            image_pos = pya.locateOnScreen(os.path.join(self.__root, img), confidence = threshold, grayscale = grayscale)
+            if isinstance(image_pos, pya.pyscreeze.Box):
                 if mensaje:print("Se encontró la imagen...",img.split('\\')[-1])
-                xx,yy=[pya.center(image_pos)._asdict()[x] for x in 'xy']
-                pya.moveTo(x=xx+x0,y=yy+y0)
-                pya.drag(xOffset=x1,yOffset=y1,duration=duration)
+                xx, yy = [pya.center(image_pos)._asdict()[x] for x in 'xy']
+                pya.moveTo(x = xx + x0, y = yy + y0)
+                pya.drag(xOffset = x1, yOffset = y1, duration = duration)
                 return
             if mensaje:print("No se ha encontrado imagen...",img.split('\\')[-1])
-    
-    def click(self,x=0,y=0,clks=1,accion='L',step=0,threshold=0.9,duration=0,mensaje=True,grayscale=False,**kwargs):
-        completa=lambda x:x if '.png' in x.lower() else x+'.png'
-        if kwargs!={}:self.image=[completa(img)]
+
+
+    def click(self, x: int = 0, y: int = 0, clks: int = 1, accion: str = 'L', step: int = 0,
+        threshold: float = 0.9, duration: int = 0, mensaje: bool = True ,grayscale: bool = False,**kwargs) -> None:
+        completa = lambda x:x if '.png' in x.lower() else x+'.png'
+        if kwargs != {}:self.image = [completa(img)]
         pya.FAILSAFE = False #bloquea el error que se muestra cuando se mueve el mouse en plena acción de la función click
         for img in self.image:
-            image_pos = pya.locateOnScreen(os.path.join(self.__root,img), confidence=threshold, grayscale=grayscale)
+            image_pos = pya.locateOnScreen(os.path.join(self.__root, img), confidence = threshold, grayscale = grayscale)
             if isinstance(image_pos,pya.pyscreeze.Box):
                 if mensaje:print("Se encontró la imagen...",img.split('\\')[-1])
-                xx,yy=[pya.center(image_pos)._asdict()[x] for x in 'xy']
-                pya.click(button=self.acciones[accion],x=xx+x,y=yy+y,clicks=clks,interval=step,duration=duration)
+                xx, yy = [pya.center(image_pos)._asdict()[x] for x in 'xy']
+                pya.click(button = self.acciones[accion], x = xx + x, y = yy + y, clicks = clks, interval = step, duration = duration)
                 return
             if mensaje:print("No se ha encontrado imagen...",img.split('\\')[-1])
-                
-    def isimage(self,*isnot,mode='or|or',threshold=0.9,mensaje=True,grayscale=False):
+
+
+    def isimage(self, *isnot, mode: str = 'or|or', threshold: float = 0.9,
+         mensaje: bool = True, grayscale:bool = False) -> bool:
         """Si mode='or'  se forma (is1 or is2 or ...) or (notis1 or notis2 or ...)
            Si mode='and' se forma (is1 or is2 or ...) and (notis1 or notis2 or ...)"""
-        mode=mode.split('|')
-        completa=lambda x:x if '.png' in x.lower() else x+'.png'
-        isnot=[completa(x) for x in isnot]
-        self.__is=False
+        mode = mode.split('|')
+        completa = lambda x:x if '.png' in x.lower() else x+'.png'
+        isnot = [completa(x) for x in isnot]
+        self.__is = False
         for img in self.image:
-            image_pos = pya.locateOnScreen(os.path.join(self.__root,img), confidence=threshold, grayscale=grayscale)
+            image_pos = pya.locateOnScreen(os.path.join(self.__root, img), confidence = threshold, grayscale = grayscale)
             if isinstance(image_pos,pya.pyscreeze.Box):
-                self.__is=True
-                if mode[0]=='or':break
+                self.__is = True
+                if mode[0] == 'or':break
             else:
-                if mode[0]=='and':
-                    self.__is=False
+                if mode[0] == 'and':
+                    self.__is = False
                     break
-        if isnot==[]:
-            if mensaje:print(f"{'No'*int(not(self.__is))} se encontró...",self.image)
+        if isnot == []:
+            if mensaje:print(f"{'No'*int(not(self.__is))} se encontró...", self.image)
             return self.__is
-        self.__notis=False
+        self.__notis = False
         for img in isnot:
-            image_pos = pya.locateOnScreen(os.path.join(self.__root,img), confidence=threshold, grayscale=grayscale)
-            if image_pos==None:
-                self.__notis=True
-                if mode[1]=='or':break
+            image_pos = pya.locateOnScreen(os.path.join(self.__root, img), confidence = threshold, grayscale = grayscale)
+            if image_pos == None:
+                self.__notis = True
+                if mode[1] == 'or':break
             else:
-                if mode[1]=='and':
-                    self.__notis=False
+                if mode[1] == 'and':
+                    self.__notis = False
                     break
-        if self.image==[]:
-            if mensaje:print(f"{'No'*int(self.__notis)} se encontró...",self.image)
+        if self.image == []:
+            if mensaje:print(f"{'No'*int(self.__notis)} se encontró...", self.image)
             return self.__notis
-        if mensaje:print(f"{'No'*int(not(self.__is and self.__notis))} se encontró...",self.image)
-        if self.mode=='or':return self.__is or self.__notis
+        if mensaje:print(f"{'No'*int(not(self.__is and self.__notis))} se encontró...", self.image)
+        if self.mode == 'or':return self.__is or self.__notis
         return self.__is and self.__notis
     
-    def wclick(self,x=0,y=0,clks=1,accion='L',step=0,threshold=0.9,duration=0,mensaje=True,time=0.3,maxi=1000):
+    def wclick(self, time: float = 0.3, maxi: int = 1000, **kwargs) -> None:
         """La Funcion espera encontrar la imagen para luego hacerle click
            la cantidad de intentos máximo por default es maxi=1000"""
-        count=0
+        count = 0
         while True:
             pya.sleep(time)
-            count+=1
-            if press(*self.image).isimage():press(*self.image).click(clks=clks);break
-            if count==maxi:break
+            count += 1
+            if press(*self.image).isimage():press(*self.image).click(**kwargs);break
+            if count == maxi:break
 
-    def clickw(self,*wait,time=0.3,maxi=1000,mode='or|or',**kwargs):
+    def clickw(self, *wait, time: float = 0.3, maxi: int = 1000, mode: str = 'or|or', **kwargs) -> None:
         """Wait es la imagen con la que va a esperar
            pone en la imagen el simbolo ! para diferenciarlo, ejemplo
            clickw('some.png','!some2.png')
@@ -108,7 +117,8 @@ class press(object):
 
     
 
-    def cwrite(self,text='',select=True,time=0.2,maxi=1000,condi='True',**kwargs):
+    def cwrite(self, text: str = '', select: bool = True, time: float = 0.2,
+         maxi: int = 1000, condi: str = 'True', **kwargs) -> None:
         """
            Función que escribe un speech, y valida que lo ha escrito, si el resultado es positivo rompe lazo.
            
@@ -121,20 +131,21 @@ class press(object):
 
                press(*args,mode='and').cwrite(text=',select=True',time=0.2,maxi=1000,**kwargs)
         """
-        count=0
+        count = 0
         while True:
             press(*self.image).click(**kwargs)
             pya.sleep(time)
-            key(str(text)).Write(select=select)
+            key(str(text)).Write(select = select)
             pya.sleep(time)
-            val=key().copy(select=select)
-            count+=1
-            if str(text)==val:
-                if self.mode=='and' and eval(condi):break
-            elif self.mode=='or' and eval(condi):break
-            if count==maxi:break
+            val = key().copy(select = select)
+            count += 1
+            if str(text) == val:
+                if self.mode == 'and' and eval(condi):break
+            elif self.mode == 'or' and eval(condi):break
+            if count == maxi:break
             
-    def ccopy(self,text='',select=True,time=0.2,maxi=1000,condi='True',**kwargs):
+    def ccopy(self, text: str = '', select: bool = True,
+         time: float = 0.2, maxi: int = 1000, condi: str = 'True', **kwargs) -> None:
         """
            Función que hace click sobre un texto y copia  y retorna el texto siempre y cuando
            cumple las condicionales fijadas condicionales.
@@ -151,18 +162,19 @@ class press(object):
 
                press(*args,mode='and').ccopy(text='',select=True,time=0.2,maxi=1000,condi='True',**kwargs)
         """
-        count=0
+        count = 0
         while True:
             press(*self.image).click(**kwargs)
             pya.sleep(time)
-            val=key().copy(select=select)
-            count+=1
-            if val!=''and (text=='' or val==text):
-                if self.mode=='and' and eval(condi):return val
-            elif self.mode=='or' and eval(condi):return val
-            if count==maxi:break
+            val = key().copy(select = select)
+            count += 1
+            if val != '' and (text == '' or val == text):
+                if self.mode == 'and' and eval(condi):return val
+            elif self.mode == 'or' and eval(condi):return val
+            if count == maxi:break
 
-    def wait(self,*wait,time=0.3,maxi=1000):
+
+    def wait(self, *wait, time: float = 0.3, maxi: int = 1000) -> None:
         """
            Función que se queda en espera hasta que aparezca y/o desaparezca una imagen.
                       
@@ -178,57 +190,61 @@ class press(object):
            
                press(wait until appear).wait(wait until disappear)
         """
-        count=0
+        count = 0
         while True:
             pya.sleep(time)
-            count+=1
-            if press(*self.image,mode=self.mode).isimage(*wait):break
-            if count==maxi:break
+            count += 1
+            if press(*self.image, mode = self.mode).isimage(*wait):break
+            if count == maxi:break
 
 
 class key(object):
-    def __init__(self,text=''):
-        self.text=text
+    def __init__(self, text: str = '') -> None:
+        self.text = text
         self.keyboard = ControllerK()# permite escribir caracteres especiales como ñ,á,é,etc
 
-    def Write(self,text='',select=True):
+    def Write(self, text: str = '', select: bool = True) -> None:
         if select:pya.hotkey('ctrl', 'a')
-        if text!='':self.text=text
-        inter= [None]+[idx for idx,x in enumerate(self.text) if x in 'áéíóúÁÉÍÓÚñÑ+']+[None]
-        if inter==[None,None]:
+        if text != '':self.text = text
+        inter = [None] + [idx for idx,x in enumerate(self.text) if x in 'áéíóúÁÉÍÓÚñÑ+'] + [None]
+        if inter == [None,None]:
             pya.typewrite(self.text) 
             return
         for x in zip(inter[:-1],inter[1:]):
-            if self.text[x[0]:x[1]]=='':continue
-            if len(self.text[x[0]:x[1]])==1:self.__Buttons(self.text[x[0]:x[1]]);continue
+            if self.text[x[0]:x[1]] == '':continue
+            if len(self.text[x[0]:x[1]]) == 1:self.__Buttons(self.text[x[0]:x[1]]);continue
             self.__Buttons(self.text[x[0]:x[1]][0])
             pya.typewrite(self.text[x[0]:x[1]][1:])
 
-    def __Buttons(self,text):
+    def __Buttons(self,text: str) -> None:
         if not(self.keyboard):self.keyboard = ControllerK()
         self.keyboard.press(text)
         self.keyboard.release(text)
 
-    def Arrow(self,key="d",num=1,time=0.3):
-        select={"w":lambda:self.__Buttons(keys.up),"a":lambda:self.__Buttons(keys.left),"s":lambda:self.__Buttons(keys.down),"d":lambda:self.__Buttons(keys.right),
-                't':lambda:self.__Buttons(keys.tab),'st':lambda:pya.hotkey('shift','tab')}#t:tab,st:shift+tab
+    def Arrow(self, key: str = "d", num: int = 1, time: float = 0.3) -> None:
+        select={"w":lambda:self.__Buttons(keys.up),
+                "a":lambda:self.__Buttons(keys.left),
+                "s":lambda:self.__Buttons(keys.down),
+                "d":lambda:self.__Buttons(keys.right),
+                't':lambda:self.__Buttons(keys.tab),
+                'st':lambda:pya.hotkey('shift','tab')}#t:tab,st:shift+tab
         for i in range(num):
             select[key]()
             pya.sleep(time)
 
-    def scut(self,*args):
+    def scut(self,*args) -> None:
         """shortcut"""
         pya.hotkey(*args)
 
-    def scroll(self,x=0,y=-500):
-        if y!=0:#up down
+    def scroll(self, x: int = 0, y: int = -500):
+        if y != 0:#up down
             pya.scroll(y)
-        if x!=0:#right left
+        if x != 0:#right left
             pya.hscroll(x)
         
-    def copy(self,men='',select=True):
+    def copy(self, men: str = '', select: bool = True) -> str:
         pyp.copy(men)
-        if men!='':return
+        if men != '':return
         if select:pya.hotkey('ctrl', 'a')
         pya.sleep(0.2)
         pya.hotkey('ctrl', 'c')
@@ -238,17 +254,19 @@ class key(object):
         print(Result)
         return Result
 
-    def paste(self):
+    def paste(self) -> None:
         pya.hotkey('ctrl','v')
 
 
 class DB(object):
-    def __init__(self,server,database,user,password):
+    def __init__(self, server: str, database: str, user: str, password: str) -> None:
         """server,database,user,password"""
-        self.credenciales=[server,database,user,password]
+        self.credenciales = [server, database, user, password]
     
-    def SQL2Dict(self,Select,resultados=True):
-        SQLServer = pyodbc.connect('DRIVER=%s;SERVER={};DATABASE={};UID={};PWD={}'.format(*self.credenciales)%('{SQL Server}'), autocommit=True)
+    def SQL2Dict(self, Select: str, resultados: bool = True) -> List[Dict[str, str]]:
+        SQLServer = pyodbc.connect(
+            'DRIVER=%s;SERVER={};DATABASE={};UID={};PWD={}'
+            .format(*self.credenciales)%('{SQL Server}'), autocommit = True)
         cursor = SQLServer.cursor()
         cursor.execute(Select)
         cursor.commit()
@@ -257,11 +275,11 @@ class DB(object):
             resultado = [{y:row[idx] for idx,y in enumerate(columnas)} for row in cursor.fetchall()]
             return resultado
         
-    def Mysql2Dict(self,Select,resultados=True):
-        head=['host','database','user','password']
-        crede=dict(zip(head,self.credenciales))
+    def Mysql2Dict(self, Select: str, resultados: bool = True) -> List[Dict[str, str]]:
+        head = ['host', 'database', 'user', 'password']
+        crede = dict(zip(head, self.credenciales))
         cnxn = mysql.connector.connect(**crede)
-        cursor = cnxn.cursor(buffered=True)
+        cursor = cnxn.cursor(buffered = True)
         cursor.execute(Select)
         cnxn.commit()
         if resultados:
@@ -270,85 +288,84 @@ class DB(object):
             return resultado
         
 class Excel(object):
-    def __init__(self,excel):
-        self.excel=excel
+    def __init__(self, excel: str) -> None:
+        self.excel = excel
 
-    def Xlsx2Dict(self,excel='', sheet=1,read_only=False):
+    def Xlsx2Dict(self, excel: str = '', sheet: int = 1, read_only: bool = False) -> Tuple[List[Dict[str, str]], Any, Any]:
         """sheet=1 se escoge la primera pagina
            sheet='Hoja 1', se escoge la pagina con el nombre Hoja 1"""
-        def filtro(value):
+        def filtro(value: str) -> str:
             value = value if value not in (None,'None','',' ') else ''
             value = value if not(isinstance(value, datetime)) else value.strftime("%Y-%m-%d")#"%d/%m/%Y")
             return str(value).replace("'", "")
-        if excel!='':self.excel=excel
-        _Writer = openpyxl.load_workbook(filename=self.excel, read_only=read_only)
+        if excel != '':self.excel = excel
+        _Writer = openpyxl.load_workbook(filename = self.excel, read_only = read_only)
         sheets = _Writer.sheetnames
-        if isinstance(sheet,str):_Writer.active=sheets.index(sheet)
-        else:_Writer.active=sheet-1#en esta funcion se considera que la primera pagina es la de posición 1
+        if isinstance(sheet, str):_Writer.active = sheets.index(sheet)
+        else:_Writer.active = sheet - 1#en esta funcion se considera que la primera pagina es la de posición 1
         _Sheet = _Writer.active
-        self.__Sheet=_Sheet
-        Header_f, Listado = [n.value for n in _Sheet[1] if n.value not in (None,'None','',' ')], []#_Sheet[1] : es la primera fila de la hoja
-        maximo=len(Header_f)
+        self.__Sheet = _Sheet
+        Header_f, Listado = [n.value for n in _Sheet[1] if n.value not in (None, 'None', '', ' ')], []#_Sheet[1] : es la primera fila de la hoja
+        maximo = len(Header_f)
         #se filtran las cabeceras
-        cambio={'á':'a','é':'e','í':'i','ó':'o','ú':'u',' ':'_','/':'_','ñ':'n'}
-        Header=["".join([cambio[y].upper() if y in cambio else y.upper() for y in x.lower().replace(' / ',' ')]) for x in Header_f]
-        self.Header=Header
+        cambio = {'á':'a', 'é':'e', 'í':'i', 'ó':'o', 'ú':'u', ' ':'_', '/':'_', 'ñ':'n'}
+        Header = ["".join([cambio[y].upper() if y in cambio else y.upper() for y in x.lower().replace(' / ', ' ')]) for x in Header_f]
+        self.Header = Header
         for row in _Sheet.iter_rows():
-            lista=[x.value for x in row[:maximo]]
-            if lista==[None]*len(lista) or Header_f==lista:continue
-            Listado.append(dict(zip(Header,map(filtro,lista))))
+            lista = [x.value for x in row[:maximo]]
+            if lista == [None]*len(lista) or Header_f == lista:continue
+            Listado.append(dict(zip(Header, map(filtro, lista))))
         if read_only:
             del _Sheet
             _Writer.close()
             return Listado
-        Sheet =lambda idx,name:_Sheet.cell(row=2+idx, column=Header.index(name)+1)## Sheet(0,'QUIEBRE').value='hola'
-        Writer=lambda:_Writer.save(self.excel)
-        return Listado,Sheet,Writer
+        Sheet = lambda idx,name:_Sheet.cell(row = 2 + idx, column = Header.index(name) + 1)## Sheet(0,'QUIEBRE').value='hola'
+        Writer = lambda:_Writer.save(self.excel)
+        return Listado, Sheet, Writer
 
-    def Xls2Dict(self,Excel):# Mejorar funcion
+    def Xls2Dict(self, Excel: str) -> List[Dict[str, str]]:# Mejorar funcion
         ##  https://stackoverflow.com/questions/12250024/how-to-obtain-sheet-names-from-xls-files-without-loading-the-whole-file/12250416#12250416
-        def filtro(value):
+        def filtro(value:str) -> str:
             value = value if value not in (None,'None','',' ') else ''
             value = value if not(isinstance(value, datetime)) else value.strftime("%Y-%m-%d")#"%d/%m/%Y")
             return str(value).replace("'", "")
-        Writer = xlrd.open_workbook(filename=Excel, on_demand = True)
+        Writer = xlrd.open_workbook(filename = Excel, on_demand = True)
         all_sheets = Writer.sheets()
         Sheet = all_sheets[0]
         Header_f, Listado = list(n for n in Sheet.row_values(0) if n not in (None,'')), []
-        maximo=len(Header_f)
+        maximo = len(Header_f)
         #se filtran las cabeceras
-        cambio={'á':'a','é':'e','í':'i','ó':'o','ú':'u',' ':'_','/':'_','ñ':'n'}
-        Header=["".join([cambio[y].upper() if y in cambio else y.upper() for y in x.lower().replace(' / ',' ')]) for x in Header_f]    
-        for row in range(1,Sheet.nrows):
-            lista=Sheet.row_values(row)[:maximo]
-            if lista in ([None]*len(lista),['']*len(lista)) or Header_f==lista:continue
-            Listado.append(dict(zip(Header,map(filtro,lista))))
+        cambio = {'á':'a', 'é':'e', 'í':'i', 'ó':'o', 'ú':'u', ' ':'_', '/':'_', 'ñ':'n'}
+        Header = ["".join([cambio[y].upper() if y in cambio else y.upper() for y in x.lower().replace(' / ', ' ')]) for x in Header_f]    
+        for row in range(1, Sheet.nrows):
+            lista = Sheet.row_values(row)[:maximo]
+            if lista in ([None]*len(lista), ['']*len(lista)) or Header_f == lista:continue
+            Listado.append(dict(zip(Header, map(filtro, lista))))
         Writer.release_resources()
         del Writer
         return Listado
 
-    def make_excel(self,resultado,dst,name):# Mejorar funcion
+    def make_excel(self, resultado: List[Dict[str, str]], dst: str, name: str) -> None:# Mejorar funcion
         """
         resultado: resultado del query
         dst: ruta de de destino
         name: nombre del archivo
         """
         #crea un valor de amdocs
-        print('resultado',len(resultado))
-        if len(resultado)==0:return
-        if isinstance(resultado[0],dict):
-            Header=[x for x in resultado[0]]
+        print('resultado', len(resultado))
+        if len(resultado) == 0:return
+        if isinstance(resultado[0], dict):
+            Header = [x for x in resultado[0]]
             body = [[x[y] for y in x] for x in resultado]
             resultado = [Header] + body
-        wb=openpyxl.Workbook()#(write_only=True)
-        sheet =wb.active
+        wb = openpyxl.Workbook()#(write_only=True)
+        sheet = wb.active
         sheet.title = "Hoja 1"
-        filtro=lambda x: str(int(x))if isinstance(x,decimal.Decimal) else (x.strftime("%d/%m/%Y %H:%M:%S") if isinstance(x,datetime) else ( "" if x==None else x))
-        rows = [list(map(filtro,x)) for x in resultado]
-        cabecera = openpyxl.styles.PatternFill(start_color='005B9BD5', end_color='005B9BD5', fill_type='solid')
-        par=openpyxl.styles.PatternFill(start_color='00DEEBF6', end_color='00DEEBF6', fill_type='solid')
-        error=[]
-        r=[]
+        filtro = lambda x: str(int(x)) if isinstance(x, decimal.Decimal) else (x.strftime("%d/%m/%Y %H:%M:%S") if isinstance(x, datetime) else ( "" if x == None else x))
+        rows = [list(map(filtro, x)) for x in resultado]
+        cabecera = openpyxl.styles.PatternFill(start_color = '005B9BD5', end_color = '005B9BD5', fill_type = 'solid')
+        par = openpyxl.styles.PatternFill(start_color = '00DEEBF6', end_color = '00DEEBF6', fill_type = 'solid')
+        error, r = [], []
         for row in rows:
             try:
                 sheet.append(row)
@@ -357,44 +374,44 @@ class Excel(object):
                 error.append(row)
         columnas = sheet.max_column
         filas = sheet.max_row
-        for y in range(filas,filas+len(error)):
+        for y in range(filas, filas + len(error)):
             for x in range(columnas):
                 try:
-                    sheet.cell(row=y+1,column=x+1).value=str(error[y-filas][x]).replace('\x03','').replace('\x13','')
+                    sheet.cell(row = y + 1, column = x + 1).value = str(error[y - filas][x]).replace('\x03', '').replace('\x13', '')
                 except:
-                    r.append(error[y-filas][x])
-                    print(error[y-filas][x])
+                    r.append(error[y - filas][x])
+                    print(error[y - filas][x])
         columnas = sheet.max_column
         filas = sheet.max_row
         ## cabeceras color
         for x in range(columnas):
-            sheet.cell(row=1, column=x+1).font = openpyxl.styles.Font(bold=True, color=openpyxl.styles.colors.WHITE)
-            sheet.cell(row=1, column=x+1).fill = cabecera
+            sheet.cell(row = 1, column = x + 1).font = openpyxl.styles.Font(bold = True, color = openpyxl.styles.colors.WHITE)
+            sheet.cell(row = 1, column = x + 1).fill = cabecera
         ## datos color
-        for y in range(1,filas):
+        for y in range(1, filas):
             for x in range(columnas):
-                if y%2==1:
+                if y%2 == 1:
                     break
                 else:
-                   sheet.cell(row=y+1, column=x+1).fill = par
-        wb.save(filename = os.path.join(dst,name))
+                   sheet.cell(row = y + 1, column = x + 1).fill = par
+        wb.save(filename = os.path.join(dst, name))
         del wb
 
 
 class Threader(threading.Thread):#controller two button at the same time
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         threading.Thread.__init__(self, *args, **kwargs)
-        self.daemon = True
-        self.killed = False
-        self.flag="play"
+        self.daemon: bool = True
+        self.killed: bool = False
+        self.flag: str = "play"
         
-    def start(self):
+    def start(self) -> None:
         self.__run_backup = self.run
         self.run = self.__run
         threading.Thread.start(self)
   
-    def __run(self):
+    def __run(self) -> None:
         sys.settrace(self.globaltrace) 
         self.__run_backup() # Fuerza al hilo a instalar nuestra traza
         self.run = self.__run_backup 
@@ -406,9 +423,9 @@ class Threader(threading.Thread):#controller two button at the same time
             return None
       
     def localtrace(self, frame, event, arg):
-        if self.flag=="pausa":
+        if self.flag == "pausa":
             while True:
-                if self.flag=="play":
+                if self.flag == "play":
                     break
                 pya.sleep(0.1)
                 if self.killed:
@@ -418,15 +435,15 @@ class Threader(threading.Thread):#controller two button at the same time
                 raise SystemExit()
         return self.localtrace
       
-    def kill(self):
+    def kill(self) -> None:
         self.killed = True
         self.join()
         
-    def pause(self):
-        self.flag="pausa"
+    def pause(self) -> None:
+        self.flag = "pausa"
         
-    def play(self):
-        self.flag="play"
+    def play(self) -> None:
+        self.flag = "play"
           
 if __name__=="__main__":
     pass
